@@ -1,16 +1,20 @@
 import socket
+import os
+import mimetypes
 
 class HTTPServer:
 
     STATUS_CODES ={
         200: "OK",
         404: "Not Found",
-        405: "Method Not Allowed"
+        405: "Method Not Allowed",
+        500: "Internal Server Error"
     }
 
-    def __init__(self,host = '127.0.0.1', port=8080):
+    def __init__(self,host = '127.0.0.1', port=8080,static_folder="static"):
         self.host = host
         self.port = port
+        self.static_folder = static_folder
 
     def create_socket(self):
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -126,7 +130,7 @@ class HTTPServer:
 
         if method == "GET":
             response = self.handle_get(path)
-        if method == "POST":
+        elif method == "POST":
             response = self.handle_post(path,body)
         else:
             response = self.build_response(405,f"Method {method} Not Allowed ")
@@ -135,10 +139,21 @@ class HTTPServer:
 
     def handle_get(self,path):
         if path == "/":
-            body = "Hello world!"
-            return self.build_response(200,body)
-        else:
-            return self.build_response(404,"Page Not Found")
+            path = "/index.html"
+
+        file_path = os.path.join(self.static_folder,path.lstrip("/"))
+        if os.path.isfile(file_path):
+            content_type, _ = mimetypes.guess_type(file_path)
+            if not content_type:
+                content_type = "application/octet-stream"
+            try:
+                with open(file_path,"r",encoding="utf-8") as f:
+                    body = f.read()
+                return self.build_response(200,body,content_type)
+            except Exception as e:
+                return self.build_response(500,f"Internal Server error {e}")
+       
+        return self.build_response(404,"Page Not Found")
     
     def handle_post(self,path,body):
         if path == "/":
