@@ -21,8 +21,8 @@ What the Server Can Do
 
     Optionally supports running WSGI-compatible apps
 
-**Example Usage
-**
+**Example Usage**
+
 Start the server:
 ```
 python server.py
