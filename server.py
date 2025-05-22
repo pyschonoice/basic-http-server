@@ -1,6 +1,10 @@
+import json
 import socket
 import os
 import mimetypes
+
+import urllib
+import urllib.parse
 
 class HTTPServer:
 
@@ -8,6 +12,7 @@ class HTTPServer:
         200: "OK",
         404: "Not Found",
         405: "Method Not Allowed",
+        415: "Unsupported Media Type",
         500: "Internal Server Error"
     }
 
@@ -131,7 +136,7 @@ class HTTPServer:
         if method == "GET":
             response = self.handle_get(path)
         elif method == "POST":
-            response = self.handle_post(path,body)
+            response = self.handle_post(path,headers,body)
         else:
             response = self.build_response(405,f"Method {method} Not Allowed ")
 
@@ -155,11 +160,21 @@ class HTTPServer:
        
         return self.build_response(404,"Page Not Found")
     
-    def handle_post(self,path,body):
-        if path == "/":
-            return self.build_response(200,body)
+    def handle_post(self,path,headers,body):
+        content_type = headers.get("Content-Type","").lower()
+        if content_type.startswith("application/json"):
+            try:
+                parsed_body = json.loads(body)
+                response_body = f"Recieved JSON:\n{json.dumps(parsed_body,indent=2)}"
+                return self.build_response(200,response_body)
+            except json.JSONDecodeError:
+                return self.build_response(400,"Invalid JSON")
+        elif content_type.startswith("application/x-www-form-urlencoded"):
+            parsed_body = urllib.parse.parse_qs(body)
+            response_body = f"Recieved Form Data:\n{json.dumps(parsed_body,indent=2)}"
+            return self.build_response(200, response_body)
         else:
-            return self.build_response(404,"Page Not Found")
+            return self.build_response(415, f"Unsupported Content-Type: {content_type}")
 
 
         
