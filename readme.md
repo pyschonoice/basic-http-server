@@ -24,9 +24,9 @@ What the Server Can Do
 Example Usage
 
 Start the server:
-
+```
 python server.py
-
+```
 Then:
 
     Visit http://localhost:8080/index.html to load a static HTML file
